@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Do we match? · Junior Backend Developer · appflame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#150921;
+    --bg2:#2a1247;
+    --violet:#8b5cf6;
+    --violet-2:#a855f7;
+    --pink:#ff3d77;
+    --pink-2:#ff7eb3;
+    --ink:#1a1130;
+    --ink-soft:#6a5f86;
+    --card:#ffffff;
+    --text:#f4f0ff;
+    --muted:#b0a5cf;
+    --line:rgba(255,255,255,.10);
+    --like:#2ee6a6;
+    --nope:#ff4d6d;
+    --display:"Bricolage Grotesque",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:var(--body);
+    color:var(--text);
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(168,85,247,.28), transparent 60%),
+      radial-gradient(900px 600px at 5% 110%, rgba(255,61,119,.22), transparent 55%),
+      linear-gradient(180deg,var(--bg2),var(--bg) 55%);
+    background-attachment:fixed;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    overflow-x:hidden;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    width:100%;
+    max-width:440px;
+    padding:18px 20px 6px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .brandrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .brand{
+    font-family:var(--display);
+    font-weight:800;
+    font-size:22px;
+    letter-spacing:-.02em;
+    display:flex;align-items:center;gap:2px;
+  }
+  .brand .heart{color:var(--pink);margin:0 4px;font-size:18px;transform:translateY(1px)}
+  .role-pill{
+    font-family:var(--mono);
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:6px 10px;
+    white-space:nowrap;
+  }
+  /* match progress */
+  .match-wrap{display:flex;align-items:center;gap:10px}
+  .match-label{
+    font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;
+    color:var(--muted);display:flex;align-items:center;gap:5px;text-transform:uppercase;
+  }
+  .match-label .mh{color:var(--pink)}
+  .bar{
+    flex:1;height:10px;border-radius:999px;
+    background:rgba(255,255,255,.08);
+    border:1px solid var(--line);
+    overflow:hidden;position:relative;
+  }
+  .bar .fill{
+    position:absolute;inset:0;width:0%;
+    background:linear-gradient(90deg,var(--violet),var(--pink));
+    border-radius:999px;
+    transition:width .5s cubic-bezier(.2,.8,.2,1);
+    box-shadow:0 0 16px rgba(255,61,119,.5);
+  }
+  .match-pct{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);min-width:38px;text-align:right}
+
+  /* ---------- deck ---------- */
+  .stage{
+    flex:1;width:100%;max-width:440px;
+    display:flex;flex-direction:column;align-items:center;
+    padding:8px 20px 0;
+    position:relative;
+  }
+  .deck{
+    position:relative;width:100%;
+    aspect-ratio:0.72;
+    max-height:60dvh;
+    margin-top:6px;
+  }
+  .card{
+    position:absolute;inset:0;
+    background:var(--card);
+    border-radius:26px;
+    overflow:hidden;
+    box-shadow:0 24px 50px -20px rgba(0,0,0,.7), 0 4px 14px rgba(0,0,0,.3);
+    display:flex;flex-direction:column;
+    transform-origin:center;
+    will-change:transform;
+    user-select:none;
+    touch-action:none;
+  }
+  .card .photo{
+    position:relative;
+    flex:1.35;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  .card .photo::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(120% 90% at 50% 20%, rgba(255,255,255,.28), transparent 55%),
+              repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 2px, transparent 2px 9px);
+    mix-blend-mode:overlay;
+  }
+  .glyph{font-size:88px;line-height:1;filter:drop-shadow(0 10px 20px rgba(0,0,0,.28));z-index:1}
+  .kind-tag{
+    position:absolute;top:14px;left:14px;z-index:2;
+    font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:#fff;background:rgba(0,0,0,.28);backdrop-filter:blur(4px);
+    padding:6px 9px;border-radius:999px;
+  }
+  .card .info{
+    flex:1;background:#fff;color:var(--ink);
+    padding:16px 18px 18px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .nameline{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .name{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.02em;line-height:1.08}
+  .verified{color:var(--violet);font-size:16px;transform:translateY(-1px)}
+  .age{font-family:var(--mono);font-size:12px;color:var(--ink-soft);font-weight:700}
+  .bio{font-size:14.5px;line-height:1.5;color:#37304d}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+  .chip{
+    font-family:var(--mono);font-size:11px;font-weight:700;
+    color:var(--ink);background:#f2edff;border:1px solid #e6dcff;
+    padding:5px 9px;border-radius:8px;
+  }
+
+  /* stamps */
+  .stamp{
+    position:absolute;top:26px;z-index:3;
+    font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:.02em;
+    padding:6px 14px;border:4px solid;border-radius:12px;
+    opacity:0;transform:rotate(-14deg);text-transform:uppercase;
+    pointer-events:none;
+  }
+  .stamp.like{left:20px;color:var(--like);border-color:var(--like);transform:rotate(-16deg)}
+  .stamp.nope{right:20px;color:var(--nope);border-color:var(--nope);transform:rotate(16deg)}
+
+  .hint{
+    font-family:var(--mono);font-size:10.5px;color:var(--muted);
+    margin-top:16px;margin-bottom:4px;text-align:center;opacity:.85;
+    line-height:1.5;letter-spacing:-.01em;
+    max-width:320px;
+  }
+  .hint b{color:var(--text);font-weight:700}
+  .hint .kbd-only{display:inline}
+  @media (hover:none),(pointer:coarse){
+    .hint .kbd-only{display:none}
+  }
+  @media (max-width:380px){
+    .hint{font-size:10px;max-width:270px}
+  }
+
+  /* ---------- action buttons ---------- */
+  .actions{
+    display:flex;align-items:center;justify-content:center;gap:18px;
+    padding:14px 0 26px;
+  }
+  .btn{
+    border:none;cursor:pointer;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:#fff;transition:transform .15s ease, box-shadow .2s ease, opacity .2s;
+    box-shadow:0 10px 24px -8px rgba(0,0,0,.6);
+  }
+  .btn:active{transform:scale(.9)}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .btn svg{width:44%;height:44%}
+  .btn.skip{width:58px;height:58px}
+  .btn.skip svg{stroke:var(--nope)}
+  .btn.rewind{width:46px;height:46px}
+  .btn.rewind svg{stroke:var(--violet-2)}
+  .btn.like{width:66px;height:66px;background:linear-gradient(140deg,var(--pink),var(--violet-2))}
+  .btn.like svg{fill:#fff}
+
+  /* ---------- match overlay ---------- */
+  .overlay{
+    position:fixed;inset:0;z-index:50;
+    display:none;flex-direction:column;align-items:center;justify-content:center;
+    padding:28px 22px;text-align:center;
+    background:
+      radial-gradient(900px 600px at 50% 0%, rgba(168,85,247,.35), transparent 60%),
+      linear-gradient(180deg, rgba(21,9,33,.92), rgba(21,9,33,.98));
+    backdrop-filter:blur(6px);
+    overflow-y:auto;
+  }
+  .overlay.show{display:flex;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .avatars{display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+  .av{
+    width:78px;height:78px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:38px;
+    border:3px solid #fff;box-shadow:0 12px 30px -8px rgba(0,0,0,.6);
+  }
+  .av.you{background:linear-gradient(140deg,#6d8bff,#a855f7);margin-right:-16px;z-index:2;transform:rotate(-6deg)}
+  .av.us{background:linear-gradient(140deg,var(--pink),#ff7a18);margin-left:-16px;transform:rotate(6deg)}
+  .match-title{
+    font-family:var(--display);font-weight:800;
+    font-size:clamp(40px,12vw,60px);letter-spacing:-.03em;line-height:1;
+    background:linear-gradient(90deg,var(--pink-2),var(--violet-2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    margin:12px 0 4px;
+  }
+  .match-sub{color:var(--muted);font-size:15px;margin-bottom:6px}
+  .liked-line{font-family:var(--mono);font-size:12.5px;color:var(--pink-2);font-weight:700;margin-bottom:18px}
+  .panel{
+    width:100%;max-width:400px;text-align:left;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);
+    border-radius:18px;padding:16px 16px 14px;margin-bottom:12px;
+  }
+  .panel h3{
+    font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:10px;
+  }
+  .req{display:flex;gap:9px;align-items:flex-start;font-size:14px;line-height:1.45;margin-bottom:7px;color:#e8e2fb}
+  .req:last-child{margin-bottom:0}
+  .req .tick{color:var(--like);font-weight:800;flex-shrink:0}
+  .bonus{display:flex;flex-wrap:wrap;gap:6px}
+  .bonus .chip{background:rgba(139,92,246,.16);border-color:rgba(139,92,246,.4);color:#d9ccff}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:#d9ccff}
+  .flow .arrow{color:var(--violet-2)}
+  .cta{
+    width:100%;max-width:400px;display:block;
+    font-family:var(--display);font-weight:700;font-size:18px;
+    text-align:center;text-decoration:none;color:#fff;
+    background:linear-gradient(140deg,var(--pink),var(--violet-2));
+    padding:16px;border-radius:16px;margin-top:6px;
+    box-shadow:0 16px 34px -12px rgba(255,61,119,.7);
+    transition:transform .15s ease;
+  }
+  .cta:active{transform:scale(.98)}
+  .cta.secondary{
+    background:transparent;border:1px solid var(--line);
+    color:var(--muted);font-family:var(--body);font-weight:600;font-size:14px;
+    padding:13px;box-shadow:none;margin-top:10px;
+  }
+  .replay{
+    background:none;border:none;color:var(--muted);
+    font-family:var(--mono);font-size:12px;margin-top:16px;cursor:pointer;
+    text-decoration:underline;text-underline-offset:3px;
+  }
+  .fine{font-size:11.5px;color:var(--ink-soft);margin-top:14px}
+
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:49}
+
+  @media (max-height:720px){
+    .glyph{font-size:66px}
+    .name{font-size:19px}
+    .deck{max-height:54dvh}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brandrow">
+      <div class="brand">appflame<span class="heart">♥</span>you</div>
+      <div class="role-pill">Junior Backend Dev</div>
+    </div>
+    <div class="match-wrap">
+      <span class="match-label"><span class="mh">♥</span>Match</span>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+      <span class="match-pct" id="pct">0%</span>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="deck" id="deck"></div>
+    <div class="hint">Drag, or tap the buttons<span class="kbd-only"> · <b>←</b> skip / <b>→</b> like</span></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn rewind" id="rewindBtn" aria-label="Rewind" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-4-4 4-4"/><path d="M5 10h9a5 5 0 0 1 0 10h-3"/></svg>
+    </button>
+    <button class="btn skip" id="skipBtn" aria-label="Skip">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <button class="btn like" id="likeBtn" aria-label="Like">
+      <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.7-10-9.3C.3 8.4 1.7 4.7 5.2 4.1 7.6 3.7 9.6 5 12 7.6 14.4 5 16.4 3.7 18.8 4.1c3.5.6 4.9 4.3 3.2 7.6C19.5 16.3 12 21 12 21z"/></svg>
+    </button>
+  </div>
+
+  <!-- MATCH SCREEN -->
+  <div class="overlay" id="overlay">
+    <canvas id="confetti"></canvas>
+    <div class="avatars">
+      <div class="av you">🧑‍💻</div>
+      <div class="av us">💜</div>
+    </div>
+    <div class="match-title" id="matchTitle">It's a Match!</div>
+    <div class="match-sub" id="matchSub">You and appflame want the same things.</div>
+    <div class="liked-line" id="likedLine"></div>
+
+    <div class="panel">
+      <h3>We're a match if you've got</h3>
+      <div class="req"><span class="tick">♥</span><span>English B1 or higher</span></div>
+      <div class="req"><span class="tick">♥</span><span>Modern PHP 8.5</span></div>
+      <div class="req"><span class="tick">♥</span><span>MySQL, Redis & Memcached</span></div>
+      <div class="req"><span class="tick">♥</span><span>OOP, Design Patterns & TDD</span></div>
+      <div class="req"><span class="tick">♥</span><span>Comfortable working with AI tools</span></div>
+    </div>
+
+    <div class="panel">
+      <h3>Bonus points</h3>
+      <div class="bonus">
+        <span class="chip">SOLID</span>
+        <span class="chip">Elasticsearch</span>
+        <span class="chip">DDD</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>How we date</h3>
+      <div class="flow">
+        recruiter <span class="arrow">→</span> interview <span class="arrow">→</span> test task <span class="arrow">→</span> tech interview <span class="arrow">→</span> final <span class="arrow">→</span> offer 🎉
+      </div>
+    </div>
+
+    <a class="cta" id="applyBtn" href="https://job-boards.eu.greenhouse.io/appflame/jobs/4913494101?gh_src=8wkfssi2teu" target="_blank" rel="noopener">Read the full vacancy →</a>
+    <div class="fine">Junior Backend Developer · appflame · Kyiv or remote</div>
+    <button class="replay" id="replayBtn">↺ start over</button>
+  </div>
+
+<script>
+const CARDS = [
+  { glyph:"🔥", kind:"about us", name:"About appflame", age:"7 yrs · 500+ people",
+    bio:"Ukrainian product company behind Hily, Taimi, AdConnect & Mailkeeper — 70M+ users combined. Forbes ranked us #5 employer in Ukraine for 2025.",
+    chips:["Kyiv · London · Limassol","70M+ users","Forbes Top 5"], g:["#ff7a18","#ff3d77"] },
+
+  { glyph:"💜", kind:"about us", name:"About Hily", age:"top-5 in the US",
+    bio:"40M daters. 1.5B likes. 50M+ matches a year. You'll build features you actually use — kinda like this one.",
+    chips:["dating app","high-load"], g:["#a855f7","#ff3d77"] },
+
+  { glyph:"🐘", kind:"the ask", name:"Do you like modern PHP?", age:"8.5, the modernest",
+    bio:"We write PHP the modern way: strict types, Attributes, Enums, Readonly & typed properties, and now the Pipe operator too. No spaghetti here.",
+    chips:["Pipe operator","Attributes","Enums","Typed props"], g:["#8b5cf6","#6d8bff"] },
+
+  { glyph:"🧩", kind:"the ask", name:"Do you like OOP & Design Patterns?", age:"TDD too",
+    bio:"Encapsulated, tested, easy to live with. Design Patterns and TDD come as standard here.",
+    chips:["Design Patterns","TDD","Clean Code"], g:["#22c55e","#14b8a6"] },
+
+  { glyph:"💾", kind:"the ask", name:"Do you wanna grow with this stack?", age:"MySQL · Redis · Memcached",
+    bio:"Just join us — we'll help you get there.",
+    chips:["MySQL","Redis","Memcached"], g:["#f43f5e","#fb923c"] },
+
+  { glyph:"🗣️", kind:"the ask", name:"Do you like English?", age:"B1 or higher",
+    bio:"We're an international company — standups, docs, and everyday processes all run in English.",
+    chips:["speaking","reading","writing"], g:["#06b6d4","#6366f1"] },
+
+  { glyph:"🤖", kind:"the ask", name:"Do you like AI?", age:"already on the team",
+    bio:"Pair with AI assistants if you want — they're part of the workflow here, not a gimmick.",
+    chips:["Claude Code","Gemini","Automation"], g:["#a855f7","#22d3ee"] },
+
+  { glyph:"🦄", kind:"our goals", name:"Our ambition", age:"no small dreams",
+    bio:"Reach the top 5 product companies in the world. Become a unicorn — and prove Ukraine is where unicorns are born.",
+    chips:["top 5 goal","unicorn dream","big vision"], g:["#f97316","#ef4444"] },
+];
+
+const deck = document.getElementById('deck');
+const fill = document.getElementById('fill');
+const pct = document.getElementById('pct');
+const overlay = document.getElementById('overlay');
+const skipBtn = document.getElementById('skipBtn');
+const likeBtn = document.getElementById('likeBtn');
+const rewindBtn = document.getElementById('rewindBtn');
+const replayBtn = document.getElementById('replayBtn');
+
+let index = 0;
+let liked = 0;
+let history = [];      // {liked:bool}
+let cardEls = [];
+let busy = false;
+
+function buildDeck(){
+  deck.innerHTML='';
+  cardEls=[];
+  // render remaining cards, topmost last so it sits on top
+  for(let i = CARDS.length-1; i>=index; i--){
+    const c = CARDS[i];
+    const el = document.createElement('div');
+    el.className='card';
+    const depth = i - index; // 0 = top
+    el.style.zIndex = 100 - depth;
+    if(depth>0){
+      el.style.transform = `translateY(${depth*10}px) scale(${1 - depth*0.04})`;
+      el.style.filter = depth>2 ? 'brightness(.9)' : 'none';
+    }
+    if(depth>3){ el.style.display='none'; }
+    el.innerHTML = `
+      <div class="photo" style="background:linear-gradient(150deg,${c.g[0]},${c.g[1]})">
+        <span class="kind-tag">${c.kind}</span>
+        <span class="glyph">${c.glyph}</span>
+        <span class="stamp like">Like</span>
+        <span class="stamp nope">Nope</span>
+      </div>
+      <div class="info">
+        <div class="nameline">
+          <span class="name">${c.name}</span>
+          <span class="verified">✔</span>
+          <span class="age">${c.age}</span>
+        </div>
+        <div class="bio">${c.bio}</div>
+        <div class="chips">${c.chips.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+      </div>`;
+    deck.appendChild(el);
+    cardEls[i]=el;
+  }
+  attachDrag(cardEls[index]);
+  updateProgress();
+}
+
+function topCard(){ return cardEls[index]; }
+
+function updateProgress(){
+  const p = Math.round((liked/CARDS.length)*100);
+  fill.style.width = p+'%';
+  pct.textContent = p+'%';
+}
+
+/* ---- drag ---- */
+function attachDrag(card){
+  if(!card) return;
+  let sx=0, sy=0, dx=0, dy=0, dragging=false;
+  const likeStamp = card.querySelector('.stamp.like');
+  const nopeStamp = card.querySelector('.stamp.nope');
+
+  const down = e=>{
+    if(busy) return;
+    dragging=true;
+    sx=(e.touches?e.touches[0].clientX:e.clientX);
+    sy=(e.touches?e.touches[0].clientY:e.clientY);
+    card.style.transition='none';
+  };
+  const move = e=>{
+    if(!dragging) return;
+    const x=(e.touches?e.touches[0].clientX:e.clientX);
+    const y=(e.touches?e.touches[0].clientY:e.clientY);
+    dx=x-sx; dy=y-sy;
+    card.style.transform=`translate(${dx}px,${dy}px) rotate(${dx*0.06}deg)`;
+    const r=Math.min(Math.abs(dx)/120,1);
+    likeStamp.style.opacity = dx>0? r:0;
+    nopeStamp.style.opacity = dx<0? r:0;
+  };
+  const up = ()=>{
+    if(!dragging) return;
+    dragging=false;
+    card.style.transition='transform .35s cubic-bezier(.2,.7,.2,1)';
+    if(dx>120){ fling(true); }
+    else if(dx<-120){ fling(false); }
+    else{
+      card.style.transform='';
+      likeStamp.style.opacity=0; nopeStamp.style.opacity=0;
+    }
+  };
+
+  card.addEventListener('mousedown',down);
+  window.addEventListener('mousemove',move);
+  window.addEventListener('mouseup',up);
+  card.addEventListener('touchstart',down,{passive:true});
+  card.addEventListener('touchmove',move,{passive:true});
+  card.addEventListener('touchend',up);
+}
+
+
+function fling(isLike){
+  if(busy) return;
+  const card = topCard();
+  if(!card) return;
+  busy=true;
+  const dir = isLike?1:-1;
+  card.style.transition='transform .5s cubic-bezier(.4,0,.6,1), opacity .5s';
+  card.style.transform=`translate(${dir*600}px, ${-40}px) rotate(${dir*30}deg)`;
+  card.style.opacity='0';
+  if(isLike) liked++;
+  history.push({liked:isLike});
+  index++;
+  rewindBtn.disabled=false;
+
+  setTimeout(()=>{
+    // restack lower cards smoothly
+    for(let i=index;i<CARDS.length;i++){
+      const el=cardEls[i]; if(!el) continue;
+      const depth=i-index;
+      el.style.display='';
+      el.style.transition='transform .35s ease, filter .35s';
+      el.style.transform = depth===0? '' : `translateY(${depth*10}px) scale(${1-depth*0.04})`;
+      el.style.filter = depth>2?'brightness(.9)':'none';
+      el.style.zIndex=100-depth;
+    }
+    attachDrag(cardEls[index]);
+    updateProgress();
+    busy=false;
+    if(index>=CARDS.length){ setTimeout(showMatch,300); }
+  },320);
+}
+
+function rewind(){
+  if(busy || history.length===0) return;
+  const last=history.pop();
+  if(last.liked) liked--;
+  index--;
+  buildDeck();
+  // pop the returned card in from the side
+  const card=cardEls[index];
+  card.style.transition='none';
+  card.style.transform=`translate(${last.liked?600:-600}px,-40px) rotate(${last.liked?30:-30}deg)`;
+  card.style.opacity='0';
+  requestAnimationFrame(()=>{
+    card.style.transition='transform .4s cubic-bezier(.2,.8,.2,1), opacity .4s';
+    card.style.transform=''; card.style.opacity='1';
+  });
+  if(history.length===0) rewindBtn.disabled=true;
+}
+
+skipBtn.addEventListener('click',()=>fling(false));
+likeBtn.addEventListener('click',()=>fling(true));
+rewindBtn.addEventListener('click',rewind);
+window.addEventListener('keydown',e=>{
+  if(overlay.classList.contains('show')) return;
+  if(e.key==='ArrowRight') fling(true);
+  if(e.key==='ArrowLeft') fling(false);
+  if(e.key==='ArrowUp') rewind();
+});
+
+/* ---- match screen ---- */
+function showMatch(){
+  const title = document.getElementById('matchTitle');
+  const sub = document.getElementById('matchSub');
+  const line = document.getElementById('likedLine');
+  const n = liked, total = CARDS.length;
+
+  if(n===0){
+    title.textContent = "It's NOT a Match?";
+    sub.textContent = "That's... a bold strategy.";
+    line.textContent = "You skipped literally everything. Brave. Send your CV anyway — we like people with confidence 😏";
+  } else if(n<=2){
+    title.textContent = "It's an almost Match!";
+    sub.textContent = "Just send your CV, we wanna talk anyway.";
+    line.textContent = `You liked ${n} of ${total}. Playing hard to get? Noted — and respected.`;
+  } else if(n<=4){
+    title.textContent = "It's a Match... ish!";
+    sub.textContent = "Halfway is still a yes in our book.";
+    line.textContent = `${n} of ${total} — you're picky, we like that in a backend dev too.`;
+  } else if(n<=6){
+    title.textContent = "It's a Match!";
+    sub.textContent = "You and appflame want the same things.";
+    line.textContent = `${n} of ${total} — solid chemistry. Let's make it official.`;
+  } else if(n===total-1){
+    title.textContent = "It's basically a Match!";
+    sub.textContent = "So close to perfect it's a little suspicious.";
+    line.textContent = `${n} of ${total}. One skip won't break us — nobody's perfect.`;
+  } else {
+    title.textContent = "It's a PERFECT Match!";
+    sub.textContent = "Marry us. Or at least send your CV.";
+    line.textContent = "You liked everything. Either you're our soulmate or you're just really good at swiping right.";
+  }
+
+  overlay.classList.add('show');
+  launchConfetti();
+}
+replayBtn.addEventListener('click',()=>{
+  overlay.classList.remove('show');
+  index=0; liked=0; history=[]; rewindBtn.disabled=true;
+  buildDeck();
+});
+
+/* ---- confetti (hearts) ---- */
+function launchConfetti(){
+  if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const cv=document.getElementById('confetti');
+  const ctx=cv.getContext('2d');
+  cv.width=innerWidth; cv.height=innerHeight;
+  const colors=['#ff3d77','#a855f7','#ff7eb3','#8b5cf6','#ffd166'];
+  const bits=Array.from({length:90},()=>({
+    x:Math.random()*cv.width, y:-20-Math.random()*cv.height,
+    s:8+Math.random()*12, vy:2+Math.random()*3, vx:-1+Math.random()*2,
+    rot:Math.random()*6, vr:-.1+Math.random()*.2,
+    c:colors[Math.floor(Math.random()*colors.length)]
+  }));
+  let frames=0;
+  function heart(x,y,s,c,rot){
+    ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(s/16,s/16);
+    ctx.fillStyle=c;ctx.beginPath();
+    ctx.moveTo(0,4);ctx.bezierCurveTo(0,-2,-8,-2,-8,3);
+    ctx.bezierCurveTo(-8,8,0,12,0,14);ctx.bezierCurveTo(0,12,8,8,8,3);
+    ctx.bezierCurveTo(8,-2,0,-2,0,4);ctx.fill();ctx.restore();
+  }
+  function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    bits.forEach(b=>{b.y+=b.vy;b.x+=b.vx;b.rot+=b.vr;heart(b.x,b.y,b.s,b.c,b.rot);});
+    frames++;
+    if(frames<420) requestAnimationFrame(tick);
+    else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  tick();
+}
+
+buildDeck();
+</script>
+</body>
+</html>
